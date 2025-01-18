@@ -29,12 +29,40 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
+
+
+
+        const productsCollection = client.db("productHunt").collection("products");
+
+
+
+
+        app.get('/products', async (req, res) => {
+            const result = await productsCollection.find().toArray();
+            res.send(result);
+        })
+
+        // app.get('/products', async (req, res) => {
+        //     const { search, page = 1, limit = 6 } = req.query;
+        //     const query = { status: "accepted" };
+        //     if (search) {
+        //         query.tags = { $regex: search, $options: "i" };
+        //     }
+        //     const products = await productsCollection.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit));
+
+        //     const totalProducts = await productsCollection.countDocuments(query);
+        //     const result = res.json({ products, totalPages: Math.ceil(totalProducts / limit) });
+        //     res.send(result);
+        // })
+
+
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
-        await client.close();
+        // await client.close();
     }
 }
 run().catch(console.dir);
