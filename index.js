@@ -49,18 +49,24 @@ async function run() {
             res.send(result);
         })
 
-        // app.get('/products', async (req, res) => {
-        //     const { search, page = 1, limit = 6 } = req.query;
-        //     const query = { status: "accepted" };
-        //     if (search) {
-        //         query.tags = { $regex: search, $options: "i" };
-        //     }
-        //     const products = await productsCollection.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit));
+        app.get('/featured/products', async (req, res) => {
+            const cursor = productsCollection.find({ category: "featured" }).sort({ createdAt: -1 }).limit(5);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
 
-        //     const totalProducts = await productsCollection.countDocuments(query);
-        //     const result = res.json({ products, totalPages: Math.ceil(totalProducts / limit) });
-        //     res.send(result);
-        // })
+        app.get('/accepted/products', async (req, res) => {
+            const { search, page = 1, limit = 6 } = req.query;
+            const query = { status: "Accepted" };
+            if (search) {
+                query.tags = { $regex: search, $options: "i" };
+            }
+            const products = await productsCollection.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).toArray();
+
+            const totalProducts = await productsCollection.countDocuments(query);
+            const result = ({ products, totalPages: Math.ceil(totalProducts / limit) });
+            res.send(result);
+        })
 
 
 
