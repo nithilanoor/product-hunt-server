@@ -42,13 +42,6 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/products/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: new ObjectId(id) };
-            const result = await productsCollection.findOne(query);
-            res.send(result);
-        })
-
         app.get('/featured/products', async (req, res) => {
             const cursor = productsCollection.find({ category: "featured" }).sort({ createdAt: -1 }).limit(5);
             const result = await cursor.toArray();
@@ -71,6 +64,13 @@ async function run() {
 
             const totalProducts = await productsCollection.countDocuments(query);
             const result = ({ products, totalPages: Math.ceil(totalProducts / limit) });
+            res.send(result);
+        })
+
+        app.get('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await productsCollection.findOne(query);
             res.send(result);
         })
 
