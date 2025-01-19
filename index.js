@@ -55,6 +55,12 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/trending/products', async (req, res) => {
+            const cursor = productsCollection.find({ category: "trending" }).sort({ upvotes: -1 }).limit(7);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
         app.get('/accepted/products', async (req, res) => {
             const { search, page = 1, limit = 6 } = req.query;
             const query = { status: "Accepted" };
