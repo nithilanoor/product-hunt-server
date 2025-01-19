@@ -33,10 +33,12 @@ async function run() {
 
 
         const productsCollection = client.db("productHunt").collection("products");
+        const reviewsCollection = client.db("productHunt").collection("reviews");
 
 
 
 
+        // product related APIs
         app.get('/products', async (req, res) => {
             const result = await productsCollection.find().toArray();
             res.send(result);
@@ -71,6 +73,20 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await productsCollection.findOne(query);
+            res.send(result);
+        })
+
+
+        // review related APIs
+        app.get('/reviews/:productId', async (req, res) => {
+            const productId = req.params.productId;
+            const reviews = await reviewsCollection.find({ productId }).toArray();
+            res.send(reviews);
+        })
+
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            const result = await reviewsCollection.insertOne(review);
             res.send(result);
         })
 
