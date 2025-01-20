@@ -237,7 +237,8 @@ async function run() {
         app.get('/stats', verifyToken, verifyAdmin, async (req, res) => {
             const products = await productsCollection.estimatedDocumentCount();
             const users = await usersCollection.estimatedDocumentCount();
-            res.send({products, users})
+            const reviews = await reviewsCollection.estimatedDocumentCount();
+            res.send({products, users, reviews})
         })
 
 
