@@ -233,6 +233,14 @@ async function run() {
         })
 
 
+        // stats
+        app.get('/stats', verifyToken, verifyAdmin, async (req, res) => {
+            const products = await productsCollection.estimatedDocumentCount();
+            const users = await usersCollection.estimatedDocumentCount();
+            res.send({products, users})
+        })
+
+
 
 
         // Send a ping to confirm a successful connection
