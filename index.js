@@ -38,6 +38,7 @@ async function run() {
         const reviewsCollection = client.db("productHunt").collection("reviews");
         const paymentsCollection = client.db("productHunt").collection("payments");
         const usersCollection = client.db("productHunt").collection("users");
+        const couponsCollection = client.db("productHunt").collection("coupons");
 
 
 
@@ -64,9 +65,20 @@ async function run() {
             })
         }
 
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            const isAdmin = user?.role === 'admin';
+            if (!isAdmin) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
+
 
         // users related APIs
-        app.get('/users', verifyToken, async (req, res) => {
+        app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
@@ -98,7 +110,7 @@ async function run() {
             res.send(result);
         })
 
-        app.patch('/users/admin/:id', async (req, res) => {
+        app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
@@ -110,7 +122,7 @@ async function run() {
             res.send(result);
         })
 
-        app.patch('/users/moderator/:id', async (req, res) => {
+        app.patch('/users/moderator/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
@@ -161,6 +173,13 @@ async function run() {
             res.send(result);
         })
 
+        // post a product
+        app.post('/products', verifyToken, async (req, res) => {
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            res.send(result);
+        })
+
 
         // review related APIs
         app.get('/reviews/:productId', async (req, res) => {
@@ -173,6 +192,20 @@ async function run() {
             const review = req.body;
             const result = await reviewsCollection.insertOne(review);
             res.send(result);
+        })
+
+
+        // coupons
+        app.get('/coupons', async (req, res) => {
+            const coupons = await couponsCollection.find().toArray();
+            res.send(coupons)
+        })
+
+        app.post('/coupons', async (req, res) => {
+            const {code, discount, expiryDate} = req.body;
+            const newCoupon = {code, discount: Number(discount), expiryDate: new Date(expiryDate)};
+            const result = await couponsCollection.insertOne(newCoupon);
+            res.send(result)
         })
 
 
