@@ -174,11 +174,67 @@ async function run() {
         })
 
         // post a product
-        app.post('/products', verifyToken, async (req, res) => {
-            const product = req.body;
-            const result = await productsCollection.insertOne(product);
-            res.send(result);
-        })
+        // app.post('/products', verifyToken, async (req, res) => {
+        //     const product = req.body;
+        //     const result = await productsCollection.insertOne(product);
+        //     res.send(result);
+        // })
+
+
+        app.post("/products", async (req, res) => {
+            try {
+                const { name, image, description, tags, external_link, owner } = req.body;
+
+                
+                if (!name || !image || !description || !owner || !owner.name || !owner.email || !owner.image) {
+                    return res.status(400).json({ message: "Missing required fields" });
+                }
+
+                const newProduct = {
+                    name,
+                    image,
+                    description,
+                    tags: tags || [],
+                    external_link: external_link || "",
+                    upvotes: 0, 
+                    owner: {
+                        name: owner.name,
+                        email: owner.email,
+                        image: owner.image,
+                    },
+                    status: "Accepted", 
+                    createdAt: new Date().toISOString(), 
+                    category: "new", 
+                };
+
+                const result = await productsCollection.insertOne(newProduct);
+
+                if (result.insertedId) {
+                    res.status(201).json({ message: "Product added successfully", productId: result.insertedId });
+                } else {
+                    res.status(500).json({ message: "Failed to add product" });
+                }
+            } catch (error) {
+                console.error("Error adding product:", error);
+                res.status(500).json({ message: "Server error" });
+            }
+        });
+
+
+        // app.get('/products/email?=email', async (req, res) => {
+        //     // 
+        //     const email = req.query.email;
+        //     let query = {};
+        //     if (email) {
+        //         query = { email: email }
+        //     }
+        //     const cursor = productsCollection.find(query);
+        //     const result = await cursor.toArray();
+        //     res.send(result);
+        // });
+
+
+
 
 
         // review related APIs
@@ -202,11 +258,50 @@ async function run() {
         })
 
         app.post('/coupons', async (req, res) => {
-            const {code, discount, expiryDate} = req.body;
-            const newCoupon = {code, discount: Number(discount), expiryDate: new Date(expiryDate)};
-            const result = await couponsCollection.insertOne(newCoupon);
-            res.send(result)
-        })
+            try {
+                console.log("Received data:", req.body);
+
+                const { code, discount, expiryDate } = req.body;
+                const parsedDate = new Date(expiryDate);
+
+                if (isNaN(parsedDate.getTime())) {
+                    return res.status(400).send({ error: "Invalid date format" });
+                }
+
+                const newCoupon = {
+                    code: code || "N/A",
+                    discount: Number(discount) || 0,
+                    expiryDate: parsedDate
+                };
+
+                console.log("Processed data:", newCoupon);
+
+                const result = await couponsCollection.insertOne(newCoupon);
+                res.send(result);
+            } catch (error) {
+                console.error("Error adding coupon:", error);
+                res.status(500).send({ error: "Server error" });
+            }
+        });
+
+        app.delete('/coupons/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const result = await couponsCollection.deleteOne({ _id: new ObjectId(id) });
+
+                if (result.deletedCount === 1) {
+                    res.send({ success: true, message: "Coupon deleted successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "Coupon not found" });
+                }
+            } catch (error) {
+                console.error("Error deleting coupon:", error);
+                res.status(500).send({ success: false, error: "Server error" });
+            }
+        });
+
+
+
 
 
         // payment intent
@@ -237,8 +332,8 @@ async function run() {
         app.get('/stats', verifyToken, verifyAdmin, async (req, res) => {
             const products = await productsCollection.estimatedDocumentCount();
             const users = await usersCollection.estimatedDocumentCount();
-            const reviews = await reviewsCollection.estimatedDocumentCount();
-            res.send({products, users, reviews})
+            const reviews = await reviewsCollection.countDocuments();
+            res.send({ products, users, reviews })
         })
 
 
