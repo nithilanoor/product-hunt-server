@@ -173,19 +173,11 @@ async function run() {
             res.send(result);
         })
 
-        // post a product
-        // app.post('/products', verifyToken, async (req, res) => {
-        //     const product = req.body;
-        //     const result = await productsCollection.insertOne(product);
-        //     res.send(result);
-        // })
-
-
         app.post("/products", async (req, res) => {
             try {
                 const { name, image, description, tags, external_link, owner } = req.body;
 
-                
+
                 if (!name || !image || !description || !owner || !owner.name || !owner.email || !owner.image) {
                     return res.status(400).json({ message: "Missing required fields" });
                 }
@@ -196,15 +188,15 @@ async function run() {
                     description,
                     tags: tags || [],
                     external_link: external_link || "",
-                    upvotes: 0, 
+                    upvotes: 0,
                     owner: {
                         name: owner.name,
                         email: owner.email,
                         image: owner.image,
                     },
-                    status: "Accepted", 
-                    createdAt: new Date().toISOString(), 
-                    category: "new", 
+                    status: "Accepted",
+                    createdAt: new Date().toISOString(),
+                    category: "new",
                 };
 
                 const result = await productsCollection.insertOne(newProduct);
@@ -220,18 +212,25 @@ async function run() {
             }
         });
 
+        app.get("/myProducts", async (req, res) => {
 
-        // app.get('/products/email?=email', async (req, res) => {
-        //     // 
-        //     const email = req.query.email;
-        //     let query = {};
-        //     if (email) {
-        //         query = { email: email }
-        //     }
-        //     const cursor = productsCollection.find(query);
-        //     const result = await cursor.toArray();
-        //     res.send(result);
-        // });
+            const email = req.query.email;
+            let query = {};
+            if (email) {
+                query = { "owner.email": email }
+            }
+            const cursor = productsCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result)
+        });
+
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await productsCollection.deleteOne(query);
+            res.send(result);
+        });
+
 
 
 
@@ -319,6 +318,11 @@ async function run() {
                 clientSecret: paymentIntent.client_secret
             })
 
+        })
+
+        app.get('/payments', async (req, res) => {
+            const payments = await paymentsCollection.find().toArray();
+            res.send(payments)
         })
 
         app.post('/payments', async (req, res) => {
